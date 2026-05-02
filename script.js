@@ -1,37 +1,4 @@
-const questions = [
-    {question: "What is the capital of France?",
-        answers: [
-            { text: "Berlin", correct: false },
-            { text: "Madrid", correct: false },
-            { text: "Paris", correct: true },
-            { text: "Rome", correct: false }
-        ]
-    },
-    {question: "Which planet is known as the Red Planet?",
-        answers: [
-            { text: "Venus", correct: false },
-            { text: "Mars", correct: true },
-            { text: "Jupiter", correct: false },
-            { text: "Mercury", correct: false }
-        ]
-    },
-    {question: "What is 5 + 3?",
-        answers: [
-            { text: "6", correct: false },
-            { text: "7", correct: false },
-            { text: "8", correct: true },
-            { text: "9", correct: false }
-        ]
-    },
-    {question: "Which animal is the largest mammal?",
-        answers: [
-            { text: "Elephant", correct: false },
-            { text: "Blue Whale", correct: true },
-            { text: "Giraffe", correct: false },
-            { text: "Hippopotamus", correct: false }
-        ]
-    },
-];
+let questions = [];
 
 const questionElement = document.getElementById("question");
 const answerButtons = document.getElementById("answer-buttons");
@@ -39,6 +6,35 @@ const nextButton = document.getElementById("next-btn");
 
 let currentQuestionIndex = 0;
 let score = 0;
+
+async function fetchQuestions() {
+    const res = await fetch("https://opentdb.com/api.php?amount=10&difficulty=medium&type=multiple");
+    const data = await res.json();
+
+    questions = data.results.map(q => {
+        const incorrect = q.incorrect_answers.map(a => ({ text: a, correct: false }));
+        const correct = { text: q.correct_answer, correct: true };
+
+        const allAnswers = [...incorrect, correct];
+
+        // shuffle answers
+        allAnswers.sort(() => Math.random() - 0.5);
+
+        return {
+            question: q.question,
+            answers: allAnswers
+        };
+    });
+
+    startQuiz();
+}
+
+function decodeHTML(text) {
+    const textarea = document.createElement("textarea");
+    textarea.innerHTML = text;
+    return textarea.value;
+}
+
 
 function startQuiz() {
     currentQuestionIndex = 0;
@@ -51,11 +47,11 @@ function showQuestion() {
     resetState();
     let currentQuestion = questions[currentQuestionIndex];
     let questionNo = currentQuestionIndex + 1;
-    questionElement.innerHTML = questionNo + ". " + currentQuestion.question;
+    questionElement.innerHTML = questionNo + ". " + decodeHTML(currentQuestion.question);
 
     currentQuestion.answers.forEach(answer => {
         const button = document.createElement("button");
-        button.innerHTML = answer.text;
+        button.innerHTML = decodeHTML(answer.text);
         button.classList.add("btn");
         answerButtons.appendChild(button);  
         if(answer.correct){
@@ -114,4 +110,4 @@ nextButton.addEventListener("click", ()=>{
         startQuiz();
     }
 })
-startQuiz();
+fetchQuestions();
